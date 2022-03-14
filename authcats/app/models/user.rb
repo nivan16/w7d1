@@ -1,22 +1,25 @@
 class User < ApplicationRecord
-  validates :user_name, :password_digest, :session_token, presence: true
-  validates :user_name, :session_token, uniqueness: true
+  validates :user_name, :password_digest, presence: true
+  validates :user_name, uniqueness: true
   validates :password, length: {minimum: 6, allow_nil: true}
-
-  after_initialize :ensure_session_token
 
   has_many :cats,
     foreign_key: :user_id,
-    class_name: :Cat
+    class_name: :Cat,
+    dependent: :destroy
 
   has_many :requests,
     foreign_key: :user_id,
-    class_name: :CatRentalRequest
+    class_name: :CatRentalRequest,
+    dependent: :destroy
+
+  has_many :sessions, 
+    foreign_key: :user_id,
+    class_name: :Session,
+    dependent: :destroy
 
   def reset_session_token!
-    self.session_token = SecureRandom::urlsafe_base64
-    self.save!
-    self.session_token
+    self.create_session.session_token
   end
 
   def password
@@ -42,8 +45,9 @@ class User < ApplicationRecord
     end
   end
 
-  def ensure_session_token
-    self.session_token ||= SecureRandom::urlsafe_base64
+  def create_session
+    session = Session.create!(session_token: SecureRandom::urlsafe_base64, user_id: self.id)
+    session
   end
 
 end
