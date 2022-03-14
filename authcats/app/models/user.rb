@@ -9,6 +9,10 @@ class User < ApplicationRecord
     foreign_key: :user_id,
     class_name: :Cat
 
+  has_many :requests,
+    foreign_key: :user_id,
+    class_name: :CatRentalRequest
+
   def reset_session_token!
     self.session_token = SecureRandom::urlsafe_base64
     self.save!
